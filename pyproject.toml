@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asset-db"
+version = "0.0.1"
+authors = [
+  { name="J. Oppliger", email="julien@oppliger.cc" },
+]
+description = "A Python implementation of the asset Database."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "Apache-2.0"
+license-files = ["LICENSE*"]
+dependencies = [
+  "open-asset-model"
+]
+
+[project.urls]
+Homepage = "https://github.com/0ppliger/asset-db.py"
+Issues = "https://github.com/0ppliger/asset-db.py/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/asset_db"]
