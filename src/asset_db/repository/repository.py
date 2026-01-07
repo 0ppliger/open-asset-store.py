@@ -30,11 +30,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_entities_by_content(self, asset: Asset, since: datetime) -> List[Entity]:
+    def find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> List[Entity]:
         pass
     
     @abstractmethod
-    def find_entities_by_type(self, atype: AssetType, since: datetime) -> List[Entity]:
+    def find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) -> List[Entity]:
         pass
     
     @abstractmethod
@@ -50,11 +50,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def incoming_edges(self, entity: Entity, since: datetime, *args: str) -> List[Edge]:
+    def incoming_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> List[Edge]:
         pass
     
     @abstractmethod
-    def outgoing_edges(self, entity: Entity, since: datetime, *args: str) -> List[Edge]:
+    def outgoing_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> List[Edge]:
         pass
     
     @abstractmethod
@@ -74,11 +74,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_entity_tags_by_content(self, property: Property, since: datetime) -> List[EntityTag]:
+    def find_entity_tags_by_content(self, property: Property, since: Optional[datetime]) -> List[EntityTag]:
         pass
     
     @abstractmethod
-    def get_entity_tags(self, entity: Entity, since: datetime, *args: str) -> List[EntityTag]:
+    def find_entity_tags(self, entity: Entity, since: Optional[datetime], *args: str) -> List[EntityTag]:
         pass
     
     @abstractmethod
@@ -98,11 +98,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_edge_tags_by_content(self, prop: Property, since: datetime) -> List[EdgeTag]:
+    def find_edge_tags_by_content(self, prop: Property, since: Optional[datetime]) -> List[EdgeTag]:
         pass
     
     @abstractmethod
-    def get_edge_tags(self, edge: Edge, since: datetime, *args: str) -> List[EdgeTag]:
+    def find_edge_tags(self, edge: Edge, since: Optional[datetime], *args: str) -> List[EdgeTag]:
         pass
     
     @abstractmethod

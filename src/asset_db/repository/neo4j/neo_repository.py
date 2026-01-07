@@ -6,12 +6,14 @@ from typing import Optional
 from datetime import datetime
 from uuid import uuid4
 from oam import Asset
+from oam import AssetType
 from oam import Property
 from oam import valid_relationship
 from asset_db.types.entity import Entity
 from asset_db.types.edge import Edge
 from asset_db.types.entity_tag import EntityTag
 from asset_db.types.edge_tag import EdgeTag
+from asset_db.repository.repository_type import RepositoryType
 from asset_db.repository.repository import Repository
 from asset_db.repository.neo4j.extract import node_to_entity
 from asset_db.repository.neo4j.extract import node_to_entity_tag
@@ -20,8 +22,7 @@ from asset_db.repository.neo4j.extract import relationship_to_edge
 from asset_db.repository.neo4j.query import query_node_by_asset_key
 from asset_db.repository.neo4j.query import query_node_by_property_key_value
 
-#class NeoRepository(Repository):
-class NeoRepository():
+class NeoRepository(Repository):
     db:     Driver
     dbname: str
 
@@ -37,8 +38,16 @@ class NeoRepository():
         return self
 
     def __exit__(self, exc_type, exc, tb):
-        self.db.close()
+        self.close()
 
+    # DONE!
+    def get_db_type(self):
+        return RepositoryType.Neo4j
+
+    # DONE!
+    def close(self):
+        self.db.close()
+        
     # DONE! (not implemented exactly the same way)
     def create_entity(self, entity: Entity) -> Entity:
         _entity: Optional[Entity] = None
@@ -105,7 +114,7 @@ class NeoRepository():
         return entity
 
     # DONE!
-    def find_entities_by_content(self, asset: Asset, since: datetime = None) -> List[Entity]:
+    def find_entities_by_content(self, asset: Asset, since: Optional[datetime] = None) -> List[Entity]:
         entities: List[Entity] = []        
         node_q = query_node_by_asset_key("a", asset)
 
@@ -129,7 +138,39 @@ class NeoRepository():
             entities.append(node_to_entity(node))
 
         return entities
-        
+
+    # TOCHECK
+    def find_entities_by_type(self, atype: AssetType, since: Optional[datetime] = None) -> List[Entity]:
+        query = f"MATCH (a:{atype.value} RETURN a)"
+        if since is not None:
+            query = f"MATCH (a:{atype.value}) WHERE a.updated_at >= localDateTime('{since.isoformat()}') RETURN a"
+
+        try:
+            records, summary, keys = self.db.execute_query(query)
+        except Exception as e:
+            raise e
+
+        if len(records) == 0:
+            raise Exception("no entities of the specified type")
+
+        results: List[Entity] = []
+        for record in records:
+            node = record.get("a")
+            if node is None:
+                raise Exception("the record value for the node is empty")
+
+            try:
+                entity = node_to_entity(node)
+            except Exception as e:
+                raise e
+
+            results.append(entity)
+
+        if len(results) == 0:
+            raise Exception("no entities of the specified type")
+
+        return results
+    
     # DONE!
     def create_asset(self, asset: Asset) -> Entity:
         return self.create_entity(
@@ -482,10 +523,76 @@ class NeoRepository():
 
             return node_to_entity_tag(node)
 
+    # TOCHECK
+    def find_entity_tag_by_id(self, id: str) -> EdgeTag:
+        try:
+            result = self.db.execute_query("MATCH (p:EntityTag {tag_id: $id}) RETURN p", {"id": id})
+        except Exception as e:
+            raise e
+
+        if result is None:
+            raise Exception(f"the entity tag with ID {id} was not found")
+
+        node = result.get("p")
+        if node is None:
+            raise Exception("the record value for the node is empty")
+
+        return node_to_entity_tag(node)
+
+    # DONE!
+    def find_entity_tags(self, entity: Entity, since: datetime = None, *args: str) -> List[EntityTag]:
+        names = list(args)
+        query = f"MATCH (p:EntityTag {{entity_id: '{entity.id}'}}) RETURN p"
+        if since is not None:
+            query = f"MATCH (p:EntityTag {{entity_id: '{entity.id}'}}) WHERE p.updated_at >= localDateTime('{since.isoformat()}') RETURN p"
+
+        try:
+            records, summary, keys = self.db.execute_query(query)
+        except Exception as e:
+            raise e
+
+        if len(records) == 0:
+            raise Exception("no entity tags found")
+
+        tags: List[EntityTag] = []
+        for record in records:
+            node = record.get("p")
+            if node is None:
+                continue
+
+            try:
+                tag = node_to_entity_tag(node)
+            except Exception as e:
+                raise e
+
+            if len(names) > 0:
+                n = tag.prop.name
+                found = n in names
+                if not found:
+                    continue
+
+            if tag:
+                tags.append(tag)
+        
+                
+        if len(tags) == 0:
+            raise Exception("no entity tag found")
+
+        return tags
+
     # DONE!
     def create_entity_property(self, entity: Entity, property: Property) -> EntityTag:
         return self.create_entity_tag(entity, EntityTag(prop=property))
 
+    # WIP
+    def delete_entity_tag(self, id: str) -> None:
+        try:
+            self.db.execute_query(
+                "MATCH (n:EntityTag {tag_id: $id}) DETACH DELETE n",
+                {"id": id})
+        except Exception as e:
+            raise e
+        
     # WIP
     def create_edge_tag(self, edge: Edge, tag: EdgeTag) -> EdgeTag:
         existing_tag = None
@@ -565,7 +672,6 @@ class NeoRepository():
 
             return node_to_edge_tag(node)
 
-
     # TOCHECK
     def create_edge_property(self, edge: Edge, property: Property) -> EdgeTag:
         return self.create_edge_tag(edge, EdgeTag(prop=property))
@@ -616,4 +722,53 @@ class NeoRepository():
             raise Exception("no edge tag found")
 
         return tags
-    
+
+    # WIP
+    def find_edge_tags(self, edge: Edge, since: datetime = None, *args: str) -> List[EdgeTag]:
+        names = list(args)
+        query = f"MATCH (p:EdgeTag {{edge_id: '{edge.id}'}}) RETURN p"
+        if since is not None:
+            query = f"MATCH (p:EdgeTag {{edge_id: '{edge.id}'}}) WHERE p.updated_at >= localDateTime('{since.isoformat()}') RETURN p"
+
+        try:
+            records, summary, keys = self.db.execute_query(query)
+        except Exception as e:
+            raise e
+
+        if len(records) == 0:
+            raise Exception("no edge tags found")
+
+        tags: List[EdgeTag] = []
+        for record in records:
+            node = record.get("p")
+            if node is None:
+                continue
+
+            try:
+                tag = node_to_edge_tag(node)
+            except Exception as e:
+                raise e
+
+            if len(names) > 0:
+                n = tag.prop.name
+                found = n in names
+                if not found:
+                    continue
+
+            if tag:
+                tags.append(tag)
+        
+                
+        if len(tags) == 0:
+            raise Exception("no edge tag found")
+
+        return tags
+
+    # WIP
+    def delete_edge_tag(self, id: str) -> None:
+        try:
+            self.db.execute_query(
+                "MATCH (n:EdgeTag {tag_id: $id}) DETACH DELETE n",
+                {"id": id})
+        except Exception as e:
+            raise e
