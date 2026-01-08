@@ -12,20 +12,19 @@ from neo4j import Result
 from neo4j.graph import Relationship
 from neo4j.time import DateTime
 
-def relationship_to_edge(rel: Relationship) -> Edge:
-    edge = Edge()
+def relationship_to_edge(rel: Relationship, from_entity: Entity, to_entity: Entity) -> Edge:
 
-    edge.id = rel.element_id
+    eid = rel.element_id
 
     _created_at = rel.get("created_at")
     if not isinstance(_created_at, DateTime):
         raise Exception("Unable to extract 'created_at'")
-    edge.created_at = _created_at.to_native()
+    created_at = _created_at.to_native()
 
     _updated_at = rel.get("updated_at")
     if not isinstance(_updated_at, DateTime):
         raise Exception("Unable to extract 'updated_at'")
-    edge.updated_at = _updated_at.to_native()
+    updated_at = _updated_at.to_native()
 
     _etype = rel.get("etype")
     if _etype is None:
@@ -46,9 +45,16 @@ def relationship_to_edge(rel: Relationship) -> Edge:
         
         d[prop_key] = prop_value
 
-    edge.relation = make_oam_object_from_dict(rel_cls, d)
+    relation = make_oam_object_from_dict(rel_cls, d)
 
-    return edge
+    return Edge(
+        id=eid,
+        created_at=created_at,
+        updated_at=updated_at,
+        relation=relation,
+        from_entity=from_entity,
+        to_entity=to_entity
+    )
     
 def _create_edge(self, edge: Edge) -> Edge:
 
@@ -102,12 +108,9 @@ def _create_edge(self, edge: Edge) -> Edge:
         raise Exception("the record value for the relationship is empty")
 
     try:
-        _edge = relationship_to_edge(r)
+        _edge = relationship_to_edge(r, edge.from_entity, edge.to_entity)
     except Exception as e:
         raise e
-
-    _edge.from_entity = edge.from_entity
-    _edge.to_entity = edge.to_entity
 
     return _edge
 
@@ -175,12 +178,14 @@ def _incoming_edges(self, entity: Entity, since: Optional[datetime] = None, *arg
             continue
 
         try:
-            edge = relationship_to_edge(r)
+            from_entity = self.find_entity_by_id(fid)
         except Exception as e:
             raise e
-
-        edge.from_entity = Entity(id=fid)
-        edge.to_entity = entity
+        
+        try:
+            edge = relationship_to_edge(r, from_entity, entity)
+        except Exception as e:
+            raise e
 
         results.append(edge)
 
@@ -222,12 +227,15 @@ def _outgoing_edges(self, entity: Entity, since: Optional[datetime] = None, *arg
             continue
 
         try:
-            edge = relationship_to_edge(r)
+            to_entity = self.find_entity_by_id(tid)
+        except Exception as e:
+            raise e
+
+        try:
+            edge = relationship_to_edge(r, entity, to_entity)
         except Exception as e:
             continue
 
-        edge.from_entity = entity
-        edge.to_entity = Entity(id=tid)
         results.append(edge)
 
     if not results:
@@ -255,17 +263,24 @@ def _find_edge_by_id(self, id: str) -> Edge:
     if fid is None:
         raise Exception("the record value for the from entity ID is empty")
 
+    try:
+        from_entity = self.find_entity_by_id(fid)
+    except Exception as e:
+        raise e
+    
     tid = record.get("tid")
     if tid is None:
         raise Exception("the record value for the to entity ID is empty")
 
     try:
-        edge = relationship_to_edge(r)
+        to_entity = self.find_entity_by_id(tid)
     except Exception as e:
         raise e
-
-    edge.from_entity = Entity(id=fid)
-    edge.to_entity = Entity(id=tid)
+    
+    try:
+        edge = relationship_to_edge(r, from_entity, to_entity)
+    except Exception as e:
+        raise e
 
     return edge
 

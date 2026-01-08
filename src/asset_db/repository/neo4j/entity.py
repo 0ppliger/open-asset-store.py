@@ -14,21 +14,19 @@ from uuid import uuid4
 from oam import FQDN, IPAddress, IPAddressType
 
 def node_to_entity(node: Node) -> Entity:
-    entity = Entity()
-
-    entity.id = node.get("entity_id")
-    if entity.id is None:
+    id = node.get("entity_id")
+    if id is None:
         raise Exception("Unable to extract 'entity_id'")
 
     _created_at = node.get("created_at")
     if not isinstance(_created_at, DateTime):
         raise Exception("Unable to extract 'created_at'")
-    entity.created_at = _created_at.to_native()
+    created_at = _created_at.to_native()
 
     _updated_at = node.get("updated_at")
     if not isinstance(_updated_at, DateTime):
         raise Exception("Unable to extract 'updated_at'")
-    entity.updated_at = _updated_at.to_native()
+    updated_at = _updated_at.to_native()
 
     _etype = node.get("etype")
     if _etype is None:
@@ -50,9 +48,14 @@ def node_to_entity(node: Node) -> Entity:
         
         d[prop_key] = prop_value
 
-    entity.asset = cast(Asset, make_oam_object_from_dict(asset_cls, d))
+    asset = cast(Asset, make_oam_object_from_dict(asset_cls, d))
 
-    return entity
+    return Entity(
+        id=id,
+        created_at=created_at,
+        updated_at=updated_at,
+        asset=asset
+    )
 
 def _create_entity(self, entity: Entity) -> Entity:
     _entity: Optional[Entity] = None

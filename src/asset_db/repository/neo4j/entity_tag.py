@@ -1,5 +1,5 @@
-from asset_db.types.entity import Entity
-from asset_db.types.entity_tag import EntityTag
+from asset_db.types import Entity
+from asset_db.types import EntityTag
 from oam import Property
 from oam import PropertyType
 from oam import get_property_by_type
@@ -13,27 +13,29 @@ from neo4j import Result
 from neo4j.graph import Node
 from uuid import uuid4
 
-def node_to_entity_tag(node: Node) -> EntityTag:
-    et = EntityTag()
-    
-    et.id = node.get("tag_id")
-    if et.id is None:
+def node_to_entity_tag(self, node: Node) -> EntityTag:
+    id = node.get("tag_id")
+    if id is None:
         raise Exception("Unable to extract 'tag_id'")
 
-    eid = node.get("entity_id")
-    if eid is None:
+    entity_id = node.get("entity_id")
+    if entity_id is None:
         raise Exception("Unable to extract 'entity_id'")
-    et.entity = Entity(id=eid)
+
+    try:
+        entity = self.find_entity_by_id(entity_id)
+    except Exception as e:
+        raise e
     
     _created_at = node.get("created_at")
     if _created_at is None:
         raise Exception("Unable to extract 'created_at'")
-    et.created_at = _created_at.to_native()
+    created_at = _created_at.to_native()
 
     _updated_at = node.get("updated_at")
     if _updated_at is None:
         raise Exception("Unable to extract 'created_at'")
-    et.updated_at = _updated_at.to_native()
+    updated_at = _updated_at.to_native()
     
     _ttype = node.get("ttype")
     if _ttype is None:
@@ -54,9 +56,15 @@ def node_to_entity_tag(node: Node) -> EntityTag:
         
         d[prop_key] = prop_value
 
-    et.prop = cast(Property, make_oam_object_from_dict(property_cls, d))
+    prop = cast(Property, make_oam_object_from_dict(property_cls, d))
         
-    return et
+    return EntityTag(
+        id=id,
+        entity=entity,
+        created_at=created_at,
+        updated_at=updated_at,
+        prop=prop
+    )
 
 def _create_entity_tag(self, entity: Entity, tag: EntityTag) -> EntityTag:
 
@@ -105,14 +113,7 @@ def _create_entity_tag(self, entity: Entity, tag: EntityTag) -> EntityTag:
         except Exception as e:
             raise e
 
-        if record is None:
-            raise Exception("no records returned from the query")
-
-        node = record.get("n")
-        if node is None:
-            raise Exception("the record value for the node is nil")
-
-        return node_to_entity_tag(node)
+        return existing_tag
 
     else:
         if tag.id is None or tag.id == "":
@@ -133,17 +134,10 @@ def _create_entity_tag(self, entity: Entity, tag: EntityTag) -> EntityTag:
         except Exception as e:
             raise e
 
-        if record is None:
-            raise Exception("no records returned from the query")
-
-        node = record.get("n")
-        if node is None:
-            raise Exception("the record value for the node is nil")
-
-        return node_to_entity_tag(node)
+        return tag
 
 def _create_entity_property(self, entity: Entity, prop: Property) -> EntityTag:
-    return self.create_entity_tag(entity, EntityTag(prop=prop))
+    return self.create_entity_tag(entity, EntityTag(entity=entity, prop=prop))
 
 def _find_entity_tags_by_content(self, prop: Property, since: Optional[datetime] = None) -> list[EntityTag]:
         tags: list[EntityTag] = []
@@ -168,7 +162,7 @@ def _find_entity_tags_by_content(self, prop: Property, since: Optional[datetime]
             if node is None:
                 continue
 
-            tag = node_to_entity_tag(node)
+            tag = node_to_entity_tag(self, node)
             if tag:
                 tags.append(tag)
 
@@ -190,7 +184,7 @@ def _find_entity_tag_by_id(self, id: str) -> EntityTag:
     if node is None:
         raise Exception("the record value for the node is empty")
 
-    return node_to_entity_tag(node)
+    return node_to_entity_tag(self, node)
 
 def _find_entity_tags(self, entity: Entity, since: Optional[datetime] = None, *args: str) -> list[EntityTag]:
     names = list(args)
@@ -213,7 +207,7 @@ def _find_entity_tags(self, entity: Entity, since: Optional[datetime] = None, *a
             continue
 
         try:
-            tag = node_to_entity_tag(node)
+            tag = node_to_entity_tag(self, node)
         except Exception as e:
             raise e
 
