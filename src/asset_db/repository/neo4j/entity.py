@@ -3,14 +3,13 @@ from oam import Asset
 from oam import AssetType
 from oam import get_asset_by_type
 from oam import describe_oam_object
-from oam import make_asset_from_dict
-from typing import List
+from oam import make_oam_object_from_dict
 from typing import Optional
 from datetime import datetime
 from neo4j import Result
 from neo4j.time import DateTime
 from neo4j.graph import Node
-
+from uuid import uuid4
 from oam import FQDN, IPAddress, IPAddressType
 
 def node_to_entity(node: Node) -> Entity:
@@ -46,11 +45,11 @@ def node_to_entity(node: Node) -> Entity:
     for prop_key in props:
         prop_value = node.get(prop_key)
         if prop_value is None:
-            raise Exception(f"Unable to extract '{prop_key}'")
+            continue
         
         d[prop_key] = prop_value
 
-    entity.asset = make_asset_from_dict(asset_cls, d)
+    entity.asset = make_oam_object_from_dict(asset_cls, d)
 
     return entity
 
@@ -121,8 +120,8 @@ def _find_entity_by_id(self, id: str) -> Entity:
     entity = node_to_entity(node)
     return entity
 
-def _find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> List[Entity]:
-    entities: List[Entity] = []        
+def _find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> list[Entity]:
+    entities: list[Entity] = []        
 
     props = asset.to_dict()
     props_filters = " AND ".join([f"a.{k} = ${k}" for k in props.keys()])
@@ -148,7 +147,7 @@ def _find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> 
 
     return entities
 
-def _find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) -> List[Entity]:
+def _find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) -> list[Entity]:
     query = f"MATCH (a:{atype.value} RETURN a)"
     if since is not None:
         query = f"MATCH (a:{atype.value}) WHERE a.updated_at >= localDateTime('{since.isoformat()}') RETURN a"
@@ -161,7 +160,7 @@ def _find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) ->
     if len(records) == 0:
         raise Exception("no entities of the specified type")
 
-    results: List[Entity] = []
+    results: list[Entity] = []
     for record in records:
         node = record.get("a")
         if node is None:

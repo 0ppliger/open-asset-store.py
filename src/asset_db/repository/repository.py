@@ -1,6 +1,5 @@
 from abc import ABC
 from abc import abstractmethod
-from typing import List
 from typing import Optional
 from oam import Asset
 from oam import AssetType
@@ -30,11 +29,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> List[Entity]:
+    def find_entities_by_content(self, asset: Asset, since: Optional[datetime]) -> list[Entity]:
         pass
     
     @abstractmethod
-    def find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) -> List[Entity]:
+    def find_entities_by_type(self, atype: AssetType, since: Optional[datetime]) -> list[Entity]:
         pass
     
     @abstractmethod
@@ -50,11 +49,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def incoming_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> List[Edge]:
+    def incoming_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> list[Edge]:
         pass
     
     @abstractmethod
-    def outgoing_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> List[Edge]:
+    def outgoing_edges(self, entity: Entity, since: Optional[datetime], *args: str) -> list[Edge]:
         pass
     
     @abstractmethod
@@ -66,7 +65,7 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def create_entity_property(self, entity: Entity, property: Property) -> EntityTag:
+    def create_entity_property(self, entity: Entity, prop: Property) -> EntityTag:
         pass
     
     @abstractmethod
@@ -74,11 +73,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_entity_tags_by_content(self, property: Property, since: Optional[datetime]) -> List[EntityTag]:
+    def find_entity_tags_by_content(self, prop: Property, since: Optional[datetime]) -> list[EntityTag]:
         pass
     
     @abstractmethod
-    def find_entity_tags(self, entity: Entity, since: Optional[datetime], *args: str) -> List[EntityTag]:
+    def find_entity_tags(self, entity: Entity, since: Optional[datetime], *args: str) -> list[EntityTag]:
         pass
     
     @abstractmethod
@@ -90,7 +89,7 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def create_edge_property(self, edge: Edge, property: Property) -> EdgeTag:
+    def create_edge_property(self, edge: Edge, prop: Property) -> EdgeTag:
         pass
     
     @abstractmethod
@@ -98,11 +97,11 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def find_edge_tags_by_content(self, prop: Property, since: Optional[datetime]) -> List[EdgeTag]:
+    def find_edge_tags_by_content(self, prop: Property, since: Optional[datetime]) -> list[EdgeTag]:
         pass
     
     @abstractmethod
-    def find_edge_tags(self, edge: Edge, since: Optional[datetime], *args: str) -> List[EdgeTag]:
+    def find_edge_tags(self, edge: Edge, since: Optional[datetime], *args: str) -> list[EdgeTag]:
         pass
     
     @abstractmethod
