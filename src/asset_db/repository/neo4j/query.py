@@ -6,16 +6,6 @@ from oam import SourceProperty
 from oam import VulnProperty
 from typing import Tuple, Optional
 
-# TODO
-def query_node_by_asset_key(varname: str, asset: Asset) -> str:
-    match(asset.asset_type):
-        case AssetType.FQDN:
-            return f'({varname}:{asset.asset_type.value} {{name: "{asset.name}"}})'
-        case AssetType.IPAddress:
-            return f'({varname}:{asset.asset_type.value} {{address: "{asset.address}"}})'
-        case _:
-            raise Exception("Unsupported asset type")
-
 def query_node_by_property_key_value(varname: str, label: str, prop: Property) -> str:
     node = ""
     if isinstance(prop, DNSRecordProperty):

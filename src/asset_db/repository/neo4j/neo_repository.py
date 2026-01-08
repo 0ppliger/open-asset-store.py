@@ -15,12 +15,16 @@ from asset_db.types.entity_tag import EntityTag
 from asset_db.types.edge_tag import EdgeTag
 from asset_db.repository.repository_type import RepositoryType
 from asset_db.repository.repository import Repository
-from asset_db.repository.neo4j.extract import node_to_entity
 from asset_db.repository.neo4j.extract import node_to_entity_tag
 from asset_db.repository.neo4j.extract import node_to_edge_tag
 from asset_db.repository.neo4j.extract import relationship_to_edge
-from asset_db.repository.neo4j.query import query_node_by_asset_key
 from asset_db.repository.neo4j.query import query_node_by_property_key_value
+from asset_db.repository.neo4j.entity import _create_asset
+from asset_db.repository.neo4j.entity import _create_entity
+from asset_db.repository.neo4j.entity import _delete_entity
+from asset_db.repository.neo4j.entity import _find_entities_by_content
+from asset_db.repository.neo4j.entity import _find_entities_by_type
+from asset_db.repository.neo4j.entity import _find_entity_by_id
 
 class NeoRepository(Repository):
     db:     Driver
@@ -40,152 +44,51 @@ class NeoRepository(Repository):
     def __exit__(self, exc_type, exc, tb):
         self.close()
 
-    # DONE!
     def get_db_type(self):
         return RepositoryType.Neo4j
 
-    # DONE!
     def close(self):
         self.db.close()
         
-    # DONE! (not implemented exactly the same way)
-    def create_entity(self, entity: Entity) -> Entity:
-        _entity: Optional[Entity] = None
-
-        if entity.id != None and entity.id != "":
-            _entity = Entity(
-                id=entity.id,
-                asset=entity.asset,
-                created_at=entity.created_at,
-                updated_at=entity.updated_at)
-        else:
-            findings = self.find_entities_by_content(entity.asset)
-            if len(findings) > 0:
-                _entity = findings[0]
-
-        if _entity == None:
-            _entity = Entity(
-                id         = str(uuid4()),
-                created_at = datetime.now(),
-                updated_at = datetime.now(),
-                asset      = entity.asset
-            )
-
-            try:
-                record = self.db.execute_query(
-                    f"CREATE (a:Entity:{_entity.etype} $props) RETURN a",
-                    {"props": _entity.to_dict()},
-                    result_transformer_=Result.single)
-            except Exception as e:
-                raise e
-
-            if record is None:
-                raise Exception("no records returned from the query")
-            
-        else:
-            try:
-                record = self.db.execute_query(
-                    f"MATCH (a:Entity:{_entity.etype} {{entity_id: $id}}) SET a=$props RETURN a",
-                    {"id": _entity.id, "props": _entity.to_dict()},
-                    result_transformer_=Result.single)
-            except Exception as e:
-                raise e
-            
-        return _entity
-
-    # DONE!
-    def find_entity_by_id(self, id: str) -> Entity:
-        try:
-            record = self.db.execute_query(
-                f"MATCH (a:Entity {{entity_id: $id}}) RETURN a",
-                {"id": id},
-                result_transformer_=Result.single)
-        except Exception as e:
-            raise e
-        
-        if record is None:
-            raise Exception("the entity with ID {id} was not found")
-
-        node = record.get("a")
-        if node is None:
-            raise Exception("the record value for the node is empty")
-
-        entity = node_to_entity(node)
-        return entity
-
-    # DONE!
-    def find_entities_by_content(self, asset: Asset, since: Optional[datetime] = None) -> List[Entity]:
-        entities: List[Entity] = []        
-        node_q = query_node_by_asset_key("a", asset)
-
-        query = f"MATCH {node_q} RETURN a"
-        if since is not None:
-            query = f"MATCH {node_q} WHERE a.updated_at >= localDateTime('{since.isoformat()}') RETURN a"
-        
-        try:
-            records, summary, keys = self.db.execute_query(query)
-        except Exception as e:
-            raise e
-
-        if len(records) == 0:
-            return entities
-
-        for rec in records:
-            node = rec.get("a")
-            if node is None:
-                continue
-            
-            entities.append(node_to_entity(node))
-
-        return entities
-
-    # TOCHECK
-    def find_entities_by_type(self, atype: AssetType, since: Optional[datetime] = None) -> List[Entity]:
-        query = f"MATCH (a:{atype.value} RETURN a)"
-        if since is not None:
-            query = f"MATCH (a:{atype.value}) WHERE a.updated_at >= localDateTime('{since.isoformat()}') RETURN a"
-
-        try:
-            records, summary, keys = self.db.execute_query(query)
-        except Exception as e:
-            raise e
-
-        if len(records) == 0:
-            raise Exception("no entities of the specified type")
-
-        results: List[Entity] = []
-        for record in records:
-            node = record.get("a")
-            if node is None:
-                raise Exception("the record value for the node is empty")
-
-            try:
-                entity = node_to_entity(node)
-            except Exception as e:
-                raise e
-
-            results.append(entity)
-
-        if len(results) == 0:
-            raise Exception("no entities of the specified type")
-
-        return results
+    def create_entity(
+            self,
+            entity: Entity
+    ) -> Entity:
+        return _create_entity(self, entity)
     
-    # DONE!
-    def create_asset(self, asset: Asset) -> Entity:
-        return self.create_entity(
-            Entity(asset=asset))
+    def create_asset(
+            self,
+            asset: Asset
+    ) -> Entity:
+        return _create_asset(self, asset)
+    
+    def find_entity_by_id(
+            self,
+            id: str
+    ) -> Entity:
+        return _find_entity_by_id(self, id)
+    
+    def find_entities_by_content(
+            self,
+            asset: Asset,
+            since: Optional[datetime] = None
+    ) -> List[Entity]:
+        return _find_entities_by_content(self, asset, since)
+    
+    def find_entities_by_type(
+            self,
+            atype: AssetType,
+            since: Optional[datetime] = None
+    ) -> List[Entity]:
+        return _find_entities_by_type(self, atype, since)
+    
+    def delete_entity(
+            self,
+            id: str
+    ) -> None:
+        _delete_entity(self, id)
 
-    # DONE!
-    def delete_entity(self, id: str) -> None:
-        try:
-            self.db.execute_query(
-                "MATCH (n:Entity {entity_id: $id}) DETACH DELETE n",
-                {"id": id})
-        except Exception as e:
-            raise e
-
-    # DONE!
+        
     def edge_seen(self, edge: Edge, updated: datetime) -> None:
         try:
             self.db.execute_query(
@@ -195,7 +98,6 @@ class NeoRepository(Repository):
         except Exception as e:
             raise e
 
-    # DONE!
     def get_duplicate_edge(self, edge: Edge, updated: datetime) -> Optional[Edge]:
         dup = None
 
@@ -212,7 +114,6 @@ class NeoRepository(Repository):
 
         return dup
 
-    # DONE!
     def incoming_edges(self, entity: Entity, since: Optional[datetime] = None, *args: str) -> List[Edge]:
         labels:  List[str]  = list(args)
         results: List[Edge] = []
@@ -263,7 +164,6 @@ class NeoRepository(Repository):
 
         return results
 
-    # DONE!
     def outgoing_edges(self, entity: Entity, since: Optional[datetime] = None, *args: str) -> List[Edge]:
         labels:  List[str]  = list(args)
         results: List[Edge] = []
@@ -310,7 +210,6 @@ class NeoRepository(Repository):
 
         return results
 
-    # DONE!
     def create_edge(self, edge: Edge) -> Edge:
 
         if edge.relation == None \
@@ -368,7 +267,6 @@ class NeoRepository(Repository):
 
         return _edge
 
-    # DONE!
     def find_edge_by_id(self, id: str) -> Edge:
         try:
             record = self.db.execute_query(
@@ -403,7 +301,6 @@ class NeoRepository(Repository):
         
         return edge
 
-    # DONE!
     def delete_edge(self, id: str) -> None:
         try:
             self.db.execute_query(
@@ -412,8 +309,6 @@ class NeoRepository(Repository):
         except Exception as e:
             raise e
 
-
-    # TOCHECK
     def find_entity_tags_by_content(self, property: Property, since: Optional[datetime] = None) -> List[EntityTag]:
         tags: List[EntityTag] = []
         qnode = query_node_by_property_key_value("p", "EntityTag", property)
@@ -444,7 +339,6 @@ class NeoRepository(Repository):
 
         return tags
         
-    # TOCHECK
     def create_entity_tag(self, entity: Entity, tag: EntityTag) -> EntityTag:
         existing_tag = None
         if tag.id is not None and tag.id != "":
@@ -523,7 +417,6 @@ class NeoRepository(Repository):
 
             return node_to_entity_tag(node)
 
-    # TOCHECK
     def find_entity_tag_by_id(self, id: str) -> EdgeTag:
         try:
             result = self.db.execute_query("MATCH (p:EntityTag {tag_id: $id}) RETURN p", {"id": id})
@@ -539,7 +432,6 @@ class NeoRepository(Repository):
 
         return node_to_entity_tag(node)
 
-    # DONE!
     def find_entity_tags(self, entity: Entity, since: datetime = None, *args: str) -> List[EntityTag]:
         names = list(args)
         query = f"MATCH (p:EntityTag {{entity_id: '{entity.id}'}}) RETURN p"
@@ -580,11 +472,9 @@ class NeoRepository(Repository):
 
         return tags
 
-    # DONE!
     def create_entity_property(self, entity: Entity, property: Property) -> EntityTag:
         return self.create_entity_tag(entity, EntityTag(prop=property))
 
-    # WIP
     def delete_entity_tag(self, id: str) -> None:
         try:
             self.db.execute_query(
@@ -593,7 +483,6 @@ class NeoRepository(Repository):
         except Exception as e:
             raise e
         
-    # WIP
     def create_edge_tag(self, edge: Edge, tag: EdgeTag) -> EdgeTag:
         existing_tag = None
         if tag.id is not None and tag.id != "":
@@ -672,11 +561,9 @@ class NeoRepository(Repository):
 
             return node_to_edge_tag(node)
 
-    # TOCHECK
     def create_edge_property(self, edge: Edge, property: Property) -> EdgeTag:
         return self.create_edge_tag(edge, EdgeTag(prop=property))
 
-    # WIP
     def find_edge_tag_by_id(self, id: str) -> EdgeTag:
         try:
             result = self.db.execute_query("MATCH (p:EdgeTag {tag_id: $id}) RETURN p", {"id": id})
@@ -692,7 +579,6 @@ class NeoRepository(Repository):
 
         return node_to_edge_tag(node)
 
-    # WIP
     def find_edge_tags_by_content(self, prop: Property, since: Optional[datetime] = None) -> List[EdgeTag]:
         tags: List[EdgeTag] = []
         qnode = query_node_by_property_key_value("p", "EdgeTag", prop)
@@ -723,7 +609,6 @@ class NeoRepository(Repository):
 
         return tags
 
-    # WIP
     def find_edge_tags(self, edge: Edge, since: datetime = None, *args: str) -> List[EdgeTag]:
         names = list(args)
         query = f"MATCH (p:EdgeTag {{edge_id: '{edge.id}'}}) RETURN p"
@@ -764,7 +649,6 @@ class NeoRepository(Repository):
 
         return tags
 
-    # WIP
     def delete_edge_tag(self, id: str) -> None:
         try:
             self.db.execute_query(

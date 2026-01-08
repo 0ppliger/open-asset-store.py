@@ -21,54 +21,6 @@ from asset_db.types.edge import Edge
 from asset_db.types.entity_tag import EntityTag
 from asset_db.types.edge_tag import EdgeTag
 
-# TODO
-def node_to_entity(node: Node) -> Entity:
-    entity = Entity()
-
-    entity.id = node.get("entity_id")
-    if entity.id is None:
-        raise Exception("Unable to extract 'entity_id'")
-
-    _created_at = node.get("created_at")
-    if not isinstance(_created_at, DateTime):
-        raise Exception("Unable to extract 'created_at'")
-    entity.created_at = _created_at.to_native()
-
-    _updated_at = node.get("updated_at")
-    if not isinstance(_updated_at, DateTime):
-        raise Exception("Unable to extract 'updated_at'")
-    entity.updated_at = _updated_at.to_native()
-
-    _etype = node.get("etype")
-    if _etype is None:
-        raise Exception("Unable to extract 'etype'")
-
-    _asset_type = AssetType(_etype)
-
-    match(_asset_type):
-        case AssetType.FQDN:
-            _fqdn_name = node.get("name")
-            if _fqdn_name is None:
-                raise Exception("Unable to extract 'name'")
-            
-            entity.asset = FQDN(_fqdn_name)
-            
-        case AssetType.IPAddress:
-            _ip_addr = node.get("address")
-            if _ip_addr is None:
-                raise Exception("Unable to extract 'address'")
-            
-            _ip_type = node.get("type")
-            if _ip_type is None:
-                raise Exception("Unable to extract 'type'")
-                        
-            entity.asset = IPAddress(_ip_addr, IPAddressType(_ip_type))
-
-        case _:
-            raise Exception("Unsupported asset type")
-    
-    return entity
-
 def node_to_property(ttype: PropertyType, node: Node) -> Property:
     match ttype:
         case PropertyType.DNSRecordProperty:
