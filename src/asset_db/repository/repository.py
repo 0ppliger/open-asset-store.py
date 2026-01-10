@@ -39,6 +39,10 @@ class Repository(ABC):
     @abstractmethod
     def delete_entity(self, id: str) -> None:
         pass
+
+    @abstractmethod
+    def create_relation(self, relation: Relation, from_entity: Entity, to_entity: Entity) -> Edge:
+        pass
     
     @abstractmethod
     def create_edge(self, edge: Edge) -> Edge:

@@ -114,6 +114,10 @@ def _create_edge(self, edge: Edge) -> Edge:
 
     return _edge
 
+def _create_relation(self, relation: Relation, from_entity: Entity, to_entity: Entity) -> Edge:
+    return self.create_edge(
+        Edge(relation, from_entityn to_entity))
+
 def _edge_seen(self, edge: Edge, updated: datetime) -> None:
     try:
         self.db.execute_query(

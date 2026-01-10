@@ -22,6 +22,7 @@ from asset_db.repository.neo4j.entity import _find_entities_by_content
 from asset_db.repository.neo4j.entity import _find_entities_by_type
 from asset_db.repository.neo4j.entity import _find_entity_by_id
 from asset_db.repository.neo4j.edge import _create_edge
+from asset_db.repository.neo4j.edge import _create_relation
 from asset_db.repository.neo4j.edge import _edge_seen
 from asset_db.repository.neo4j.edge import _get_duplicate_edge
 from asset_db.repository.neo4j.edge import _find_edge_by_id
@@ -109,6 +110,13 @@ class NeoRepository(Repository):
     ) -> Edge:
         return _create_edge(self, edge)
 
+    def create_relation(
+            self,
+            relation: Relation,
+            from_entity: Entity,
+            to_entity: Entity) -> Edge:
+        return _create_relation(self, relation, from_entity, to_entity)
+    
     def edge_seen(
             self,
             edge: Edge,
