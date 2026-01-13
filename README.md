@@ -7,7 +7,7 @@ the [OWASP Amass Project](https://github.com/owasp-amass/asset-db).
 ## Install
 
 ```bash
-pip install asset-db
+pip install open-asset-store
 ```
 
 ## Exemple
@@ -34,13 +34,13 @@ with NeoRepository(uri, auth) as db:
     
     a_record  = db.create_edge(
         Edge(
-            relation    = BasicDNSRelation("dns_record", rrtype=1),
+            relation    = BasicDNSRelation("dns_record", rrtype=1, rrname="A"),
             from_entity = fqdn,
             to_entity   = ip))
     
     txt_record = db.create_entity_property(
         fqdn,
-        DNSRecordProperty("dns_record", "token=awes0me", 16))
+        DNSRecordProperty("dns_record", "token=awes0me", 16, "TXT"))
     
     source = db.create_edge_property(
         a_record,
