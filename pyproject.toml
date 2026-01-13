@@ -3,8 +3,8 @@ requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "asset-db"
-version = "0.0.4"
+name = "open-asset-store"
+version = "0.0.1"
 authors = [
   { name="J. Oppliger", email="julien@oppliger.cc" },
 ]
