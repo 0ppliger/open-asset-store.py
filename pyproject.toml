@@ -18,7 +18,7 @@ classifiers = [
 license = "Apache-2.0"
 license-files = ["LICENSE*"]
 dependencies = [
-  "open-asset-model >= 1.0.0",
+  "open-asset-model >= 1.1.1",
   "neo4j >= 6.0.3"
 ]
 
@@ -27,4 +27,4 @@ Homepage = "https://github.com/0ppliger/asset-db.py"
 Issues = "https://github.com/0ppliger/asset-db.py/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/asset_db"]
+packages = ["src/asset_store"]

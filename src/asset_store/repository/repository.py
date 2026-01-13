@@ -1,14 +1,14 @@
 from abc import ABC
 from abc import abstractmethod
 from typing import Optional
-from oam import Asset
-from oam import AssetType
-from oam import Property
-from oam import Relation
-from asset_db.types.entity import Entity
-from asset_db.types.entity_tag import EntityTag
-from asset_db.types.edge import Edge
-from asset_db.types.edge_tag import EdgeTag
+from asset_model import Asset
+from asset_model import AssetType
+from asset_model import Property
+from asset_model import Relation
+from asset_store.types.entity import Entity
+from asset_store.types.entity_tag import EntityTag
+from asset_store.types.edge import Edge
+from asset_store.types.edge_tag import EdgeTag
 from datetime import datetime
 
 class Repository(ABC):

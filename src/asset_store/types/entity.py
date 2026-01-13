@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from oam import Asset
+from asset_model import Asset
 from typing import Optional
 
 @dataclass

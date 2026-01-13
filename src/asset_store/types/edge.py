@@ -1,7 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
-from oam import Relation
+from asset_model import Relation
 from .entity import Entity
 
 @dataclass

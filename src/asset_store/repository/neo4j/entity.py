@@ -1,9 +1,9 @@
-from asset_db.types.entity import Entity
-from oam import Asset
-from oam import AssetType
-from oam import get_asset_by_type
-from oam import describe_oam_object
-from oam import make_oam_object_from_dict
+from asset_store.types.entity import Entity
+from asset_model import Asset
+from asset_model import AssetType
+from asset_model import get_asset_by_type
+from asset_model import describe_oam_object
+from asset_model import make_oam_object_from_dict
 from typing import Optional
 from typing import cast
 from datetime import datetime
@@ -11,7 +11,7 @@ from neo4j import Result
 from neo4j.time import DateTime
 from neo4j.graph import Node
 from uuid import uuid4
-from oam import FQDN, IPAddress, IPAddressType
+from asset_model import FQDN, IPAddress, IPAddressType
 
 def node_to_entity(node: Node) -> Entity:
     id = node.get("entity_id")

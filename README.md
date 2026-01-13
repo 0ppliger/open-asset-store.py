@@ -13,14 +13,14 @@ pip install open-asset-store
 ## Exemple
 
 ```python
-from asset_db.repository.neo4j import NeoRepository
-from asset_db.types import Edge
-from asset_db.types import Entity
-from oam import FQDN
-from oam import IPAddress, IPAddressType
-from oam import BasicDNSRelation
-from oam import DNSRecordProperty
-from oam import SourceProperty
+from asset_store.repository.neo4j import NeoRepository
+from asset_store.types import Edge
+from asset_store.types import Entity
+from asset_model import FQDN
+from asset_model import IPAddress, IPAddressType
+from asset_model import BasicDNSRelation
+from asset_model import DNSRecordProperty
+from asset_model import SourceProperty
 
 uri = "neo4j://localhost"
 auth = ("neo4j", "password")

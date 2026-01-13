@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
-from oam import Property
 from typing import Optional
-from .edge import Edge
+from asset_model import Property
+from .entity import Entity
 
 @dataclass
-class EdgeTag:
-    edge:       Edge
+class EntityTag:
+    entity:     Entity
     prop:       Property
     id:         Optional[str]      = None
     created_at: Optional[datetime] = None
@@ -19,7 +19,7 @@ class EdgeTag:
     def to_dict(self) -> dict:        
         return {
             "tag_id":     self.id,
-            "edge_id":    self.edge.id,
+            "entity_id":  self.entity.id,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "ttype":      self.ttype,
