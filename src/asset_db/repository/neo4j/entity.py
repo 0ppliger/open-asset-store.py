@@ -49,7 +49,7 @@ def node_to_entity(node: Node) -> Entity:
         d[prop_key] = prop_value
 
     extra_props = list(filter(lambda e: e.startswith("extra_"), node.keys()))
-    extra = { key: rel.get(key) for key in extra_props }
+    extra = { key: node.get(key) for key in extra_props }
 
     d.update(extra)
         
