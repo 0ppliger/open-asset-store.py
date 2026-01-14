@@ -76,7 +76,7 @@ class NeoRepository(Repository):
     def close(self) -> None:
         self.db.close()
 
-    def flush(self) -> list[events.Event]:
+    def flush_events(self) -> list[events.Event]:
         events = self._events_buffer
         self._events_buffer = []
         return events

@@ -19,7 +19,7 @@ class Repository(ABC):
         pass
     
     @abstractmethod
-    def flush(self) -> list[events.Event]:
+    def flush_events(self) -> list[events.Event]:
         pass
     
     @abstractmethod
