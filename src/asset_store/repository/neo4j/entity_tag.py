@@ -154,9 +154,9 @@ def find_entity_tags_by_content(self, prop: Property, since: Optional[datetime] 
         props = prop.to_dict()
         props_filters = " AND ".join([f"p.{k} = ${k}" for k in props.keys()])
     
-        query = f"MATCH (p:{prop.property_type.value}) WHERE {props_filters} RETURN p"
+        query = f"MATCH (p:EntityTag:{prop.property_type.value}) WHERE {props_filters} RETURN p"
         if since is not None:
-            query = f"MATCH (p:{prop.property_type.value}) WHERE {props_filters} AND p.updated_at >= localDateTime('{since.isoformat()}') RETURN p"
+            query = f"MATCH (p:EntityTag:{prop.property_type.value}) WHERE {props_filters} AND p.updated_at >= localDateTime('{since.isoformat()}') RETURN p"
             
         try:
             records, summary, keys = self.db.execute_query(query, props)
