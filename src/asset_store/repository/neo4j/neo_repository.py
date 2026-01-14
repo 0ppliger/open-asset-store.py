@@ -50,12 +50,14 @@ class NeoRepository(Repository):
             self,
             uri: str,
             auth: tuple[str, str],
-            enforce_taxonomy: bool = True
+            enforce_taxonomy: bool = True,
+            emit_events: bool = False
     ):
         self._uri = uri
         self._auth = auth
         self._events_buffer = []
         self.enforce_taxonomy = enforce_taxonomy
+        self.emit_events = emit_events
     
     def __enter__(self):
         _db = GraphDatabase.driver(self._uri, auth=self._auth)
@@ -65,7 +67,8 @@ class NeoRepository(Repository):
         return self
 
     def _emit(self, event: events.Event) -> None:
-        self._events_buffer.append(event)
+        if self.emit_events:
+            self._events_buffer.append(event)
 
     def __exit__(self, exc_type, exc, tb):
         self.close()

@@ -19,7 +19,7 @@ def repo():
     """Fixture providing a NeoRepository instance."""
     uri = "neo4j://localhost"
     auth = ("neo4j", "password")
-    with NeoRepository(uri, auth) as repository:
+    with NeoRepository(uri, auth, emit_events=True) as repository:
         yield repository
         try:
             repository.db.execute_query("MATCH (n) DETACH DELETE n")
