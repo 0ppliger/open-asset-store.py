@@ -17,7 +17,9 @@ from uuid import uuid4
 
 def _relationship_to_edge(rel: Relationship, from_entity: Entity, to_entity: Entity) -> Edge:
 
-    eid = rel.element_id
+    id = rel.get("edge_id")
+    if id is None:
+        raise Exception("Unable to extract 'edge_id'")
 
     _created_at = rel.get("created_at")
     if not isinstance(_created_at, DateTime):
@@ -56,7 +58,7 @@ def _relationship_to_edge(rel: Relationship, from_entity: Entity, to_entity: Ent
     relation = OAMObject.from_dict(rel_cls, d)
     
     return Edge(
-        id=eid,
+        id=id,
         created_at=created_at,
         updated_at=updated_at,
         relation=relation,
@@ -266,7 +268,7 @@ def outgoing_edges(self, entity: Entity, since: Optional[datetime] = None, *args
 def find_edge_by_id(self, id: str) -> Edge:
     try:
         record = self.db.execute_query(
-            f"MATCH (from:Entity) -[r]-> (to:Entity) WHERE elementId(r) = $id RETURN r, from.entity_id as fid, to.entity_id as tid",
+            f"MATCH (from:Entity) -[r {{edge_id: $id}}]-> (to:Entity) RETURN r, from.entity_id as fid, to.entity_id as tid",
             {"id": id},
             result_transformer_=Result.single)
     except Exception as e:
@@ -309,7 +311,7 @@ def delete_edge(self, id: str) -> Edge:
 
     try:
         self.db.execute_query(
-            "MATCH ()-[r]->() WHERE elementId(r) = $id DELETE r",
+            "MATCH ()-[r {{ edge_id: $id }}]->() DELETE r",
             {"id": id})
     except Exception as e:
         raise e
