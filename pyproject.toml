@@ -18,7 +18,7 @@ classifiers = [
 license = "Apache-2.0"
 license-files = ["LICENSE*"]
 dependencies = [
-  "open-asset-model >= 1.1.1",
+  "open-asset-model >= 1.1.2",
   "neo4j >= 6.0.3"
 ]
 
